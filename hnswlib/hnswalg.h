@@ -8,6 +8,7 @@
 #include <assert.h>
 #include <unordered_set>
 #include <list>
+#include <boost/type_index.hpp>
 
 namespace hnswlib {
     typedef unsigned int tableint;
@@ -750,7 +751,7 @@ namespace hnswlib {
         }
 
         template<typename data_t>
-        std::vector<data_t> getDataByLabel(labeltype label)
+        char* getDataByLabel(labeltype label)
         {
             tableint label_c;
             auto search = label_lookup_.find(label);
@@ -761,13 +762,15 @@ namespace hnswlib {
 
             char* data_ptrv = getDataByInternalId(label_c);
             size_t dim = *((size_t *) dist_func_param_);
-            std::vector<data_t> data;
-            data_t* data_ptr = (data_t*) data_ptrv;
-            for (int i = 0; i < dim; i++) {
-                data.push_back(*data_ptr);
-                data_ptr += 1;
-            }
-            return data;
+            //std::vector<data_t> data;
+            //data_t* data_ptr = (data_t*) data_ptrv;
+            //for (int i = 0; i < dim; i++) {
+            //
+            //    std::cout<< data_ptrv << " dsadasdadaddas";
+            //    data.push_back(*data_ptr);
+            //    data_ptr += 1;
+            //}
+            return data_ptrv;
         }
 
         static const unsigned char DELETE_MARK = 0x01;

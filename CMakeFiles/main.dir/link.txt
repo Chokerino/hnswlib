@@ -1,0 +1,1 @@
+/opt/cray/pe/craype/2.6.2/bin/CC     CMakeFiles/main.dir/main.cpp.o  -o main libsift_test.a 

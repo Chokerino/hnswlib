@@ -1,13 +1,14 @@
+#define _GLIBCXX_USE_CXX11_ABI 0
 #include <iostream>
 #include <pybind11/pybind11.h>
 #include <pybind11/numpy.h>
 #include <pybind11/stl.h>
 #include "hnswlib.h"
 #include <thread>
+#include <boost/type_index.hpp>
 #include <atomic>
 #include <stdlib.h>
 #include <assert.h>
-
 namespace py = pybind11;
 using namespace pybind11::literals; // needed to bring in _a literal
 
@@ -82,7 +83,7 @@ inline void ParallelFor(size_t start, size_t end, size_t numThreads, Function fn
 
 
 
-template<typename dist_t, typename data_t=float>
+template<typename dist_t, typename data_t=float, typename dist_s=char>
 class Index {
 public:
   Index(const std::string &space_name, const int dim) :
@@ -97,6 +98,12 @@ public:
     else if(space_name=="cosine") {
       l2space = new hnswlib::InnerProductSpace(dim);
       normalize=true;
+    }
+    else if(space_name=="fastani"){
+      l2space = new hnswlib::FastANISpace(dim);
+    }
+    else if(space_name=="fastaai"){
+      l2space = new hnswlib::FastAAISpace(dim);
     }
     appr_alg = NULL;
     ep_added = true;
@@ -173,12 +180,12 @@ public:
             norm_array[i]=data[i]*norm;
     }
 
-    void addItems(py::object input, py::object ids_ = py::none(), int num_threads = -1) {
-        py::array_t < dist_t, py::array::c_style | py::array::forcecast > items(input);
+    void addItems(py::object input, py::object ids_ = py::none(), int num_threads = -1, int max_size = 500) {
+        const int size = max_size;
+        py::array_t < std::array<char, 500>, py::array::c_style | py::array::forcecast > items(input);
         auto buffer = items.request();
         if (num_threads <= 0)
             num_threads = num_threads_default;
-
         size_t rows, features;
 
         if (buffer.ndim != 2 && buffer.ndim != 1) throw std::runtime_error("data must be a 1d/2d array");
@@ -218,7 +225,6 @@ public:
                 throw std::runtime_error("wrong dimensionality of the labels");
         }
 
-
         {
 
           int start = 0;
@@ -256,21 +262,23 @@ public:
         }
     }
 
-    std::vector<std::vector<data_t>> getDataReturnList(py::object ids_ = py::none()) {
+    std::vector<std::string> getDataReturnList(py::object ids_ = py::none()) {
         std::vector<size_t> ids;
         if (!ids_.is_none()) {
             py::array_t < size_t, py::array::c_style | py::array::forcecast > items(ids_);
             auto ids_numpy = items.request();
             std::vector<size_t> ids1(ids_numpy.shape[0]);
             for (size_t i = 0; i < ids1.size(); i++) {
-                ids1[i] = items.data()[i];
+                ids1[i] =  items.data()[i];
             }
             ids.swap(ids1);
         }
 
-        std::vector<std::vector<data_t>> data;
+        std::vector<std::string> data;
         for (auto id : ids) {
-            data.push_back(appr_alg->template getDataByLabel<data_t>(id));
+            std::string name;
+            name.assign(appr_alg->template getDataByLabel<char>(id));
+            data.push_back(name);
         }
         return data;
     }
@@ -536,7 +544,7 @@ public:
 
     py::object knnQuery_return_numpy(py::object input, size_t k = 1, int num_threads = -1) {
 
-        py::array_t < dist_t, py::array::c_style | py::array::forcecast > items(input);
+        py::array_t < std::array<char, 500>, py::array::c_style | py::array::forcecast > items(input);
         auto buffer = items.request();
         hnswlib::labeltype *data_numpy_l;
         dist_t *data_numpy_d;
@@ -567,7 +575,6 @@ public:
 
             data_numpy_l = new hnswlib::labeltype[rows * k];
             data_numpy_d = new dist_t[rows * k];
-
             if(normalize==false) {
                 ParallelFor(0, rows, num_threads, [&](size_t row, size_t threadId) {
                                 std::priority_queue<std::pair<dist_t, hnswlib::labeltype >> result = appr_alg->searchKnn(
@@ -661,7 +668,7 @@ PYBIND11_PLUGIN(hnswlib) {
         .def(py::init<const std::string &, const int>(), py::arg("space"), py::arg("dim"))
         .def("init_index", &Index<float>::init_new_index, py::arg("max_elements"), py::arg("M")=16, py::arg("ef_construction")=200, py::arg("random_seed")=100)
         .def("knn_query", &Index<float>::knnQuery_return_numpy, py::arg("data"), py::arg("k")=1, py::arg("num_threads")=-1)
-        .def("add_items", &Index<float>::addItems, py::arg("data"), py::arg("ids") = py::none(), py::arg("num_threads")=-1)
+        .def("add_items", &Index<float>::addItems, py::arg("data"), py::arg("ids") = py::none(), py::arg("num_threads")=-1, py::arg("max_size")= 500)
         .def("get_items", &Index<float, float>::getDataReturnList, py::arg("ids") = py::none())
         .def("get_ids_list", &Index<float>::getIdsList)
         .def("set_ef", &Index<float>::set_ef, py::arg("ef"))

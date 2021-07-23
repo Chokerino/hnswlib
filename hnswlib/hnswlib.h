@@ -106,3 +106,5 @@ namespace hnswlib {
 #include "space_ip.h"
 #include "bruteforce.h"
 #include "hnswalg.h"
+#include "space_fastani.h"
+#include "space_fastaai.h"

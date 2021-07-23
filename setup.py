@@ -13,6 +13,14 @@ __version__ = '0.5.1'
 include_dirs = [
     pybind11.get_include(),
     np.get_include(),
+    '/global/homes/b/bhavay07/FastANI/src/',
+    '/global/homes/b/bhavay07/gsl/include/'
+]
+
+library_dirs = [
+    '/global/homes/b/bhavay07/gsl/include/',
+    '/global/homes/b/bhavay07/gsl/lib/',
+    '/global/homes/b/bhavay07/gsl/',
 ]
 
 # compatibility when run in python_bindings
@@ -25,7 +33,7 @@ else:
     include_dirs.extend(['./hnswlib/'])
 
 
-libraries = []
+libraries = ["z","gsl","gslcblas","stdc++","m"]
 extra_objects = []
 
 
@@ -37,6 +45,7 @@ ext_modules = [
         libraries=libraries,
         language='c++',
         extra_objects=extra_objects,
+        library_dirs = library_dirs,
     ),
 ]
 

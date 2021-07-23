@@ -4,7 +4,6 @@ project (hnsw_lib)
 include_directories("${PROJECT_BINARY_DIR}")
 
 
-
 set(SOURCE_EXE main.cpp)           
 
 set(SOURCE_LIB sift_1b.cpp)

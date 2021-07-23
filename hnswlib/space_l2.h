@@ -14,8 +14,9 @@ namespace hnswlib {
             float t = *pVect1 - *pVect2;
             pVect1++;
             pVect2++;
-            res += t * t;
+            res += t * t * t;
         }
+        std :: cout << "Alllooo";
         return (res);
     }
 

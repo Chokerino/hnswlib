@@ -1,0 +1,6 @@
+/global/homes/b/bhavay07/hnswlib/CMakeFiles/rebuild_cache.dir
+/global/homes/b/bhavay07/hnswlib/CMakeFiles/edit_cache.dir
+/global/homes/b/bhavay07/hnswlib/CMakeFiles/test_updates.dir
+/global/homes/b/bhavay07/hnswlib/CMakeFiles/searchKnnCloserFirst_test.dir
+/global/homes/b/bhavay07/hnswlib/CMakeFiles/main.dir
+/global/homes/b/bhavay07/hnswlib/CMakeFiles/sift_test.dir
